@@ -4,13 +4,10 @@ pipeline{
         branch = 'master'
     }
     stages {
-        stage('SCM Checkout'){
+        stage('Clone repository'){
             agent any
             steps {
-                git (
-                    url:'https://github.com/Sliuza/flask-python3-jenkins.git',
-                    branch: "${branch}"
-                )
+               checkout scm
             }
             post {
                 success {
@@ -21,6 +18,20 @@ pipeline{
                 }
             }
         }
+
+        stage('Build image'){
+            agent any
+            steps{
+                app = docker.build("sliuzas/flask-user")
+            }
+        }
+
+        stage('Push image') {
+            docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+            app.push("${env.BUILD_NUMBER}")
+            app.push("latest")
+        }
+    }
 
     }
 
